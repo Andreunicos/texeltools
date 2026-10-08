@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batch Image Converter & Compressor – PNG to WebP, JPG, Online</title>
+<meta name="description" content="Convert and compress many images at once to WebP, JPEG or PNG, resize them and download as a ZIP. Runs in your browser: no upload, no signup, no limits.">
+<meta name="keywords" content="batch image converter, png to webp, image compressor online, bulk resize images, convert to webp, sprite optimizer">
+<meta property="og:title" content="Batch Image Converter & Compressor">
+<meta property="og:description" content="Convert and compress images in bulk, right in your browser.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e0f13">
+<style>
+  :root {
+    --bg: #0e0f13; --panel: #171920; --panel-2: #1f222b; --border: #2a2e3a;
+    --text: #e6e8ee; --muted: #8a90a2; --accent: #8b7cff; --accent-2: #5ad1c6; --bad: #ff8a8a; --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+  .nav { max-width: 1200px; margin: 0 auto; padding: 14px 16px 0; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .nav .brand { font-weight: 700; color: var(--text); margin-right: 10px; text-decoration: none; }
+  .nav .brand span { color: var(--accent); }
+  .nav a.link { color: var(--muted); text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 8px; }
+  .nav a.link:hover { color: var(--text); background: var(--panel); }
+  .nav a.link.active { color: var(--text); background: var(--panel-2); }
+  header { max-width: 1200px; margin: 0 auto; padding: 20px 16px 8px; }
+  header h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); letter-spacing: -0.02em; }
+  header h1 span { color: var(--accent); }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .panel + .panel { margin-top: 16px; }
+  #drop { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px 12px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; color: var(--muted); }
+  #drop:hover, #drop.over { border-color: var(--accent); background: rgba(139,124,255,.06); color: var(--text); }
+  #drop strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+  #file { display: none; }
+  .field { margin-bottom: 14px; }
+  .field label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .field label output { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; cursor: pointer; }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+  button { width: 100%; padding: 11px 14px; border: 0; border-radius: 10px; font: 600 14px/1 inherit; cursor: pointer; transition: filter .15s, opacity .15s; }
+  button.primary { background: var(--accent); color: #fff; }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button:hover:not(:disabled) { filter: brightness(1.12); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-row { display: grid; gap: 8px; }
+  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .list { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .row { display: grid; grid-template-columns: 48px 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border); }
+  .row:first-child { border-top: 0; }
+  .row img { width: 48px; height: 48px; object-fit: contain; border-radius: 6px; background: #12141a; }
+  .row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .row .sub { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .row .pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 48px; text-align: right; }
+  .row a.dl { color: var(--accent); font-size: 13px; text-decoration: none; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+  .row a.dl:hover { border-color: var(--accent); }
+  .saving { color: var(--accent-2); }
+  .worse { color: var(--bad); }
+  .empty { padding: 48px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+  .hint { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  section.info { max-width: 1200px; margin: 8px auto 0; padding: 0 16px 40px; color: var(--muted); font-size: 14px; }
+  section.info h2 { color: var(--text); font-size: 18px; margin: 28px 0 8px; }
+  section.info h3 { color: var(--text); font-size: 15px; margin: 18px 0 4px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 16px 28px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="index.html">Texel<span>Tools</span></a>
+  <a class="link" href="index.html">Normal Map</a>
+  <a class="link" href="sprite-sheet.html">Sprite Sheet</a>
+  <a class="link active" href="converter.html">Image Converter</a>
+</nav>
+
+<header>
+  <h1>Batch Image <span>Converter</span> & Compressor</h1>
+  <p>Convert, resize and compress many images at once. Nothing leaves your device.</p>
+</header>
+
+<main>
+  <aside>
+    <div class="panel">
+      <h2>1 · Images</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="Choose or drop images">
+        <strong>Drop images here</strong>
+        or click to browse · PNG, JPG, WebP, GIF, BMP
+      </div>
+      <input type="file" id="file" accept="image/*" multiple>
+    </div>
+
+    <div class="panel">
+      <h2>2 · Output</h2>
+      <div class="field">
+        <label for="format">Format</label>
+        <select id="format">
+          <option value="image/webp">WebP (smallest)</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG (lossless)</option>
+        </select>
+      </div>
+      <div class="field" id="qualityField">
+        <label for="quality">Quality <output id="qualityOut">80</output></label>
+        <input type="range" id="quality" min="10" max="100" step="1" value="80">
+      </div>
+      <div class="field">
+        <label for="maxSize">Max size (px, longest side)</label>
+        <select id="maxSize">
+          <option value="0">Keep original</option>
+          <option value="3840">3840</option>
+          <option value="2048">2048</option>
+          <option value="1920">1920</option>
+          <option value="1280">1280</option>
+          <option value="1024">1024</option>
+          <option value="512">512</option>
+          <option value="256">256</option>
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" id="pixel"> Pixel art (no smoothing when resizing)</label>
+      <label class="check"><input type="checkbox" id="keepBigger" checked> Keep original if output is larger</label>
+      <div class="btn-row">
+        <button class="primary" id="zip" disabled>Download all (ZIP)</button>
+        <button class="secondary" id="clear" disabled>Clear list</button>
+      </div>
+      <p class="hint" id="hint"></p>
+    </div>
+  </aside>
+
+  <div>
+    <div class="totals">
+      <div class="stat"><b id="tIn">—</b><span>Before</span></div>
+      <div class="stat"><b id="tOut">—</b><span>After</span></div>
+      <div class="stat"><b id="tDiff">—</b><span>Saved</span></div>
+    </div>
+    <div class="list" id="list"><div class="empty">Converted images will appear here</div></div>
+  </div>
+</main>
+
+<section class="info">
+  <h2>Why convert game and web images to WebP?</h2>
+  <p>WebP usually produces files 25–35% smaller than PNG or JPEG at similar visual quality, and it supports transparency. Smaller sprites and textures mean faster load times for HTML5 games and websites, which matters most on mobile connections.</p>
+  <h3>What does "Keep original if output is larger" do?</h3>
+  <p>Some images, especially small or already optimized PNGs, can grow when re-encoded. With this option on, the tool keeps the original file in those cases, so a batch never makes anything worse.</p>
+  <h3>Should I use pixel art mode?</h3>
+  <p>Yes, for pixel art that you resize. It keeps hard edges instead of blurring them. For pixel art, PNG or lossless-quality WebP is safer than JPEG.</p>
+  <h3>Are my images uploaded?</h3>
+  <p>No. Conversion uses your browser's own encoders through the HTML5 Canvas API. There is no server and no file limit beyond your device's memory.</p>
+</section>
+
+<footer>Free browser tools for game developers · <a href="privacy.html">Privacy Policy</a></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const EXT = { 'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg' };
+  let items = []; // { id, file, url, out: {blob, name, kept}, rowEl }
+  let seq = 0, runToken = 0, debounce = 0;
+
+  // ---------- Input ----------
+  const drop = $('drop'), fileInput = $('file');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', e => { addFiles(e.target.files); fileInput.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+  window.addEventListener('paste', e => {
+    const files = [...(e.clipboardData?.items || [])].filter(i => i.type.startsWith('image/')).map(i => i.getAsFile());
+    if (files.length) addFiles(files);
+  });
+
+  function addFiles(list) {
+    const files = [...list].filter(f => f && f.type.startsWith('image/'));
+    if (!files.length) return;
+    if (!items.length) $('list').innerHTML = '';
+    files.forEach(file => {
+      const it = { id: ++seq, file, url: URL.createObjectURL(file), out: null };
+      it.rowEl = makeRow(it);
+      $('list').appendChild(it.rowEl);
+      items.push(it);
+    });
+    $('clear').disabled = false;
+    convertAll();
+  }
+
+  function makeRow(it) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<img alt=""><div style="min-width:0"><div class="name"></div><div class="sub">Converting…</div></div><div class="pct"></div><span></span>`;
+    row.querySelector('img').src = it.url;
+    row.querySelector('.name').textContent = it.file.name;
+    return row;
+  }
+
+  // ---------- Conversion ----------
+  function loadImage(url) {
+    return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  }
+
+  async function convertOne(it, opts) {
+    const img = await loadImage(it.url);
+    const w0 = img.naturalWidth, h0 = img.naturalHeight;
+    const s = opts.max ? Math.min(1, opts.max / Math.max(w0, h0)) : 1;
+    const w = Math.max(1, Math.round(w0 * s)), h = Math.max(1, Math.round(h0 * s));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    if (opts.type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+    ctx.imageSmoothingEnabled = !opts.pixel;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    const blob = await new Promise(r => c.toBlob(r, opts.type, opts.type === 'image/png' ? undefined : opts.q));
+    if (!blob) throw new Error('encode failed');
+    const base = it.file.name.replace(/\.[^.]+$/, '') || 'image';
+    const resized = s < 1;
+    // Keep the original only when nothing else was asked for (no resize) and it is smaller
+    if (opts.keepBigger && !resized && blob.size >= it.file.size) {
+      return { blob: it.file, name: it.file.name, kept: true, w, h };
+    }
+    return { blob, name: `${base}.${EXT[blob.type] || 'png'}`, kept: false, w, h, fallback: blob.type !== opts.type };
+  }
+
+  async function convertAll() {
+    const token = ++runToken;
+    const opts = {
+      type: $('format').value, q: +$('quality').value / 100, max: +$('maxSize').value,
+      pixel: $('pixel').checked, keepBigger: $('keepBigger').checked
+    };
+    $('zip').disabled = true;
+    let fallback = false;
+    for (const it of items) {
+      if (token !== runToken) return; // settings changed, a newer run took over
+      it.rowEl.querySelector('.sub').textContent = 'Converting…';
+      try {
+        it.out = await convertOne(it, opts);
+        if (token !== runToken) return;
+        fallback = fallback || it.out.fallback;
+        updateRow(it);
+      } catch {
+        it.out = null;
+        it.rowEl.querySelector('.sub').textContent = 'Could not read this image';
+      }
+    }
+    if (token !== runToken) return;
+    $('hint').textContent = fallback ? 'Your browser cannot encode this format; files were saved as PNG instead.' : formatHint();
+    updateTotals();
+    $('zip').disabled = !items.some(i => i.out);
+  }
+
+  function updateRow(it) {
+    const { out, file } = it;
+    const diff = (out.blob.size - file.size) / file.size * 100;
+    it.rowEl.querySelector('.sub').textContent =
+      `${fmt(file.size)} → ${fmt(out.blob.size)} · ${out.w}×${out.h}` + (out.kept ? ' · kept original' : '');
+    const pct = it.rowEl.querySelector('.pct');
+    pct.textContent = (diff > 0 ? '+' : '') + diff.toFixed(0) + '%';
+    pct.className = 'pct ' + (diff <= 0 ? 'saving' : 'worse');
+    const slot = it.rowEl.lastElementChild;
+    if (it.dlUrl) URL.revokeObjectURL(it.dlUrl);
+    it.dlUrl = URL.createObjectURL(out.blob);
+    slot.innerHTML = '';
+    const a = document.createElement('a');
+    a.className = 'dl'; a.href = it.dlUrl; a.download = out.name; a.textContent = 'Save';
+    slot.appendChild(a);
+  }
+
+  function updateTotals() {
+    const done = items.filter(i => i.out);
+    if (!done.length) { $('tIn').textContent = $('tOut').textContent = $('tDiff').textContent = '—'; return; }
+    const tin = done.reduce((s, i) => s + i.file.size, 0);
+    const tout = done.reduce((s, i) => s + i.out.blob.size, 0);
+    $('tIn').textContent = fmt(tin);
+    $('tOut').textContent = fmt(tout);
+    const saved = (1 - tout / tin) * 100;
+    const el = $('tDiff');
+    el.textContent = saved.toFixed(0) + '%';
+    el.className = saved >= 0 ? 'saving' : 'worse';
+  }
+
+  // ---------- ZIP ----------
+  $('zip').addEventListener('click', async () => {
+    if (typeof JSZip === 'undefined') { alert('ZIP library failed to load. Use the individual Save links.'); return; }
+    const btn = $('zip');
+    btn.disabled = true; btn.textContent = 'Building ZIP…';
+    const zip = new JSZip(), used = new Set();
+    items.filter(i => i.out).forEach(i => {
+      let name = i.out.name;
+      for (let n = 2; used.has(name); n++) name = i.out.name.replace(/(\.[^.]+)$/, `_${n}$1`);
+      used.add(name);
+      zip.file(name, i.out.blob);
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'converted-images.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    btn.disabled = false; btn.textContent = 'Download all (ZIP)';
+  });
+
+  $('clear').addEventListener('click', () => {
+    runToken++;
+    items.forEach(i => { URL.revokeObjectURL(i.url); if (i.dlUrl) URL.revokeObjectURL(i.dlUrl); });
+    items = [];
+    $('list').innerHTML = '<div class="empty">Converted images will appear here</div>';
+    $('zip').disabled = $('clear').disabled = true;
+    updateTotals();
+  });
+
+  // ---------- Controls ----------
+  function formatHint() {
+    const f = $('format').value;
+    return f === 'image/png' ? 'PNG is lossless: use Max size to shrink files.'
+         : f === 'image/jpeg' ? 'JPEG has no transparency: transparent areas become white.' : '';
+  }
+  function onSettings() {
+    $('qualityField').style.display = $('format').value === 'image/png' ? 'none' : '';
+    $('hint').textContent = formatHint();
+    clearTimeout(debounce);
+    debounce = setTimeout(() => items.length && convertAll(), 200);
+  }
+  $('quality').addEventListener('input', e => { $('qualityOut').textContent = e.target.value; onSettings(); });
+  ['format', 'maxSize', 'pixel', 'keepBigger'].forEach(id => $(id).addEventListener('change', onSettings));
+
+  function fmt(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+  onSettings();
+})();
+</script>
+</body>
+</html>

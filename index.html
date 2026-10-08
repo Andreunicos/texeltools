@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Normal Map Generator & Texture Compressor – Online, No Upload</title>
+<meta name="description" content="Generate normal maps from any texture and compress images to WebP, JPEG or PNG directly in your browser. 100% client-side: your files never leave your computer.">
+<meta name="keywords" content="normal map generator, normal map online, texture compressor, sprite optimizer, webp converter, gamedev tools">
+<meta property="og:title" content="Free Normal Map Generator & Texture Compressor">
+<meta property="og:description" content="Normal maps and texture compression in your browser. No upload, no signup.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e0f13">
+<style>
+  :root {
+    --bg: #0e0f13;
+    --panel: #171920;
+    --panel-2: #1f222b;
+    --border: #2a2e3a;
+    --text: #e6e8ee;
+    --muted: #8a90a2;
+    --accent: #8b7cff;
+    --accent-2: #5ad1c6;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    max-width: 1200px; margin: 0 auto; padding: 28px 16px 8px;
+  }
+  header h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); letter-spacing: -0.02em; }
+  header h1 span { color: var(--accent); }
+  header p { margin: 6px 0 0; color: var(--muted); }
+
+  main {
+    max-width: 1200px; margin: 0 auto; padding: 16px;
+    display: grid; grid-template-columns: 300px 1fr; gap: 16px;
+  }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .panel h2 {
+    margin: 0 0 12px; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+  }
+  .panel + .panel { margin-top: 16px; }
+
+  #drop {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 28px 12px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s; color: var(--muted);
+  }
+  #drop:hover, #drop.over { border-color: var(--accent); background: rgba(139,124,255,.06); color: var(--text); }
+  #drop strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+  #file { display: none; }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .field label output { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select, input[type=number] {
+    width: 100%; background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit;
+  }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; cursor: pointer; }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  button {
+    width: 100%; padding: 11px 14px; border: 0; border-radius: 10px;
+    font: 600 14px/1 inherit; cursor: pointer; transition: filter .15s, opacity .15s;
+  }
+  button.primary { background: var(--accent); color: #fff; }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button:hover:not(:disabled) { filter: brightness(1.12); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-row { display: grid; gap: 8px; }
+
+  .viewer { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .viewer { grid-template-columns: 1fr; } }
+  .canvas-box {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .canvas-box .label {
+    padding: 10px 14px; font-size: 12px; color: var(--muted);
+    border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+  }
+  .canvas-wrap {
+    flex: 1; min-height: 240px; display: grid; place-items: center; padding: 12px;
+    background-color: #12141a;
+    background-image:
+      linear-gradient(45deg, #181b22 25%, transparent 25%),
+      linear-gradient(-45deg, #181b22 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #181b22 75%),
+      linear-gradient(-45deg, transparent 75%, #181b22 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  }
+  canvas { max-width: 100%; max-height: 60vh; image-rendering: auto; display: block; }
+  .placeholder { color: var(--muted); font-size: 13px; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;
+  }
+  .stat { background: var(--panel-2); border-radius: 8px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .saving { color: var(--accent-2); }
+  .worse { color: #ff8a8a; }
+
+  .hint { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+
+  section.info {
+    max-width: 1200px; margin: 8px auto 0; padding: 0 16px 40px;
+    color: var(--muted); font-size: 14px;
+  }
+  section.info h2 { color: var(--text); font-size: 18px; margin: 28px 0 8px; }
+  section.info h3 { color: var(--text); font-size: 15px; margin: 18px 0 4px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 16px 28px; }
+  footer a { color: var(--muted); }
+  .nav { max-width: 1200px; margin: 0 auto; padding: 14px 16px 0; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .nav .brand { font-weight: 700; color: var(--text); margin-right: 10px; text-decoration: none; }
+  .nav .brand span { color: var(--accent); }
+  .nav a.link { color: var(--muted); text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 8px; }
+  .nav a.link:hover { color: var(--text); background: var(--panel); }
+  .nav a.link.active { color: var(--text); background: var(--panel-2); }
+  header { padding-top: 20px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="index.html">Texel<span>Tools</span></a>
+  <a class="link active" href="index.html">Normal Map</a>
+  <a class="link" href="sprite-sheet.html">Sprite Sheet</a>
+  <a class="link" href="converter.html">Image Converter</a>
+</nav>
+
+<header>
+  <h1>Normal Map <span>Generator</span> & Texture Compressor</h1>
+  <p>Runs 100% in your browser. Your images are never uploaded anywhere.</p>
+</header>
+
+<main>
+  <aside>
+    <div class="panel">
+      <h2>1 · Texture</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="Choose or drop an image">
+        <strong>Drop an image here</strong>
+        or click to browse · PNG, JPG, WebP
+      </div>
+      <input type="file" id="file" accept="image/*">
+    </div>
+
+    <div class="panel">
+      <h2>2 · Normal map</h2>
+      <div class="field">
+        <label for="strength">Strength <output id="strengthOut">2.0</output></label>
+        <input type="range" id="strength" min="0.1" max="10" step="0.1" value="2">
+      </div>
+      <div class="field">
+        <label for="blur">Smoothing <output id="blurOut">1</output></label>
+        <input type="range" id="blur" min="0" max="8" step="1" value="1">
+      </div>
+      <label class="check"><input type="checkbox" id="invertH"> Invert height (dark = high)</label>
+      <label class="check"><input type="checkbox" id="directx"> DirectX format (flip green / Y−)</label>
+      <label class="check"><input type="checkbox" id="tile" checked> Seamless edges (tileable)</label>
+    </div>
+
+    <div class="panel">
+      <h2>3 · Export & compress</h2>
+      <div class="field">
+        <label for="target">Image to export</label>
+        <select id="target">
+          <option value="normal">Normal map</option>
+          <option value="original">Original texture</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="format">Format</label>
+        <select id="format">
+          <option value="image/png">PNG (lossless)</option>
+          <option value="image/webp">WebP</option>
+          <option value="image/jpeg">JPEG</option>
+        </select>
+      </div>
+      <div class="field" id="qualityField">
+        <label for="quality">Quality <output id="qualityOut">85</output></label>
+        <input type="range" id="quality" min="10" max="100" step="1" value="85">
+      </div>
+      <div class="field">
+        <label for="maxSize">Max size (px, longest side)</label>
+        <select id="maxSize">
+          <option value="0">Keep original</option>
+          <option value="4096">4096</option>
+          <option value="2048">2048</option>
+          <option value="1024">1024</option>
+          <option value="512">512</option>
+          <option value="256">256</option>
+          <option value="128">128</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="download" disabled>Download</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="sizeIn">—</b><span>Original</span></div>
+        <div class="stat"><b id="sizeOut">—</b><span>Output</span></div>
+        <div class="stat"><b id="sizeDiff">—</b><span>Change</span></div>
+      </div>
+      <p class="hint" id="formatHint"></p>
+    </div>
+  </aside>
+
+  <div>
+    <div class="viewer">
+      <div class="canvas-box">
+        <div class="label"><span>Original</span><span id="dimIn"></span></div>
+        <div class="canvas-wrap">
+          <canvas id="srcCanvas" hidden></canvas>
+          <div class="placeholder" id="ph1">No image loaded</div>
+        </div>
+      </div>
+      <div class="canvas-box">
+        <div class="label"><span>Normal map</span><span id="timeOut"></span></div>
+        <div class="canvas-wrap">
+          <canvas id="nrmCanvas" hidden></canvas>
+          <div class="placeholder" id="ph2">Waiting for a texture</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<section class="info">
+  <h2>What is a normal map?</h2>
+  <p>A normal map is an RGB texture that stores surface direction per pixel. Game engines use it to fake bumps, grooves and detail on flat geometry without adding polygons. This tool reads the brightness of your texture as a height map and converts its slopes into normals using a Sobel filter.</p>
+  <h3>OpenGL or DirectX?</h3>
+  <p>Unity, Blender and Godot use OpenGL-style normal maps (Y+). Unreal Engine and most DirectX pipelines use Y−. Tick "DirectX format" if your lighting looks inverted.</p>
+  <h3>Which format should I export?</h3>
+  <p>Use PNG or high-quality WebP for normal maps: JPEG artifacts distort the normals and create visible lighting noise. For color textures and sprites, WebP usually gives the smallest files at the same visual quality.</p>
+  <h3>Is it private?</h3>
+  <p>Yes. Everything is processed locally with the HTML5 Canvas API. No server ever receives your images.</p>
+</section>
+
+<footer>Free browser tools for game developers · <a href="privacy.html">Privacy Policy</a></footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), fileInput = $('file');
+  const srcCanvas = $('srcCanvas'), nrmCanvas = $('nrmCanvas');
+  const srcCtx = srcCanvas.getContext('2d', { willReadFrequently: true });
+  const nrmCtx = nrmCanvas.getContext('2d');
+  const MAX_DIM = 4096; // protects mobile devices from huge allocations
+
+  let srcFile = null;     // original File, for size comparison
+  let baseName = 'texture';
+  let heightMap = null;   // Float32Array of luminance (0..1)
+  let W = 0, H = 0;
+  let pending = 0, exportTimer = 0, lastBlob = null;
+
+  // ---------- Loading ----------
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', e => e.target.files[0] && loadFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.remove('over');
+  }));
+  drop.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+  // Allow dropping anywhere on the page
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+  // Paste from clipboard
+  window.addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (item) loadFile(item.getAsFile());
+  });
+
+  function loadFile(file) {
+    srcFile = file;
+    baseName = (file.name || 'texture').replace(/\.[^.]+$/, '') || 'texture';
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const scale = Math.min(1, MAX_DIM / Math.max(w, h));
+      W = Math.max(1, Math.round(w * scale));
+      H = Math.max(1, Math.round(h * scale));
+      srcCanvas.width = nrmCanvas.width = W;
+      srcCanvas.height = nrmCanvas.height = H;
+      srcCtx.clearRect(0, 0, W, H);
+      srcCtx.drawImage(img, 0, 0, W, H);
+      URL.revokeObjectURL(url);
+
+      const d = srcCtx.getImageData(0, 0, W, H).data;
+      heightMap = new Float32Array(W * H);
+      for (let i = 0, p = 0; i < heightMap.length; i++, p += 4) {
+        heightMap[i] = (0.2126 * d[p] + 0.7152 * d[p + 1] + 0.0722 * d[p + 2]) / 255;
+      }
+
+      $('dimIn').textContent = `${img.naturalWidth}×${img.naturalHeight}` + (scale < 1 ? ` → ${W}×${H}` : '');
+      $('sizeIn').textContent = fmtBytes(file.size);
+      srcCanvas.hidden = nrmCanvas.hidden = false;
+      $('ph1').hidden = $('ph2').hidden = true;
+      $('download').disabled = false;
+      generate();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); alert('Could not read this image.'); };
+    img.src = url;
+  }
+
+  // ---------- Normal map ----------
+  function boxBlur(src, w, h, r, wrap) {
+    if (r <= 0) return src;
+    const tmp = new Float32Array(src.length), out = new Float32Array(src.length);
+    const n = 2 * r + 1;
+    const ix = wrap ? (x => ((x % w) + w) % w) : (x => x < 0 ? 0 : x >= w ? w - 1 : x);
+    const iy = wrap ? (y => ((y % h) + h) % h) : (y => y < 0 ? 0 : y >= h ? h - 1 : y);
+    for (let y = 0; y < h; y++) {           // horizontal pass (running sum)
+      const row = y * w;
+      let sum = 0;
+      for (let k = -r; k <= r; k++) sum += src[row + ix(k)];
+      for (let x = 0; x < w; x++) {
+        tmp[row + x] = sum / n;
+        sum += src[row + ix(x + r + 1)] - src[row + ix(x - r)];
+      }
+    }
+    for (let x = 0; x < w; x++) {           // vertical pass
+      let sum = 0;
+      for (let k = -r; k <= r; k++) sum += tmp[iy(k) * w + x];
+      for (let y = 0; y < h; y++) {
+        out[y * w + x] = sum / n;
+        sum += tmp[iy(y + r + 1) * w + x] - tmp[iy(y - r) * w + x];
+      }
+    }
+    return out;
+  }
+
+  function generate() {
+    if (!heightMap) return;
+    const t0 = performance.now();
+    const strength = +$('strength').value;
+    const blur = +$('blur').value;
+    const invert = $('invertH').checked;
+    const dx_ = $('directx').checked;
+    const wrap = $('tile').checked;
+
+    let hm = boxBlur(heightMap, W, H, blur, wrap);
+    const out = nrmCtx.createImageData(W, H);
+    const o = out.data;
+    const sign = invert ? -1 : 1;
+    const ySign = dx_ ? -1 : 1;
+
+    const cx = wrap ? (x => ((x % W) + W) % W) : (x => x < 0 ? 0 : x >= W ? W - 1 : x);
+    const cy = wrap ? (y => ((y % H) + H) % H) : (y => y < 0 ? 0 : y >= H ? H - 1 : y);
+
+    for (let y = 0; y < H; y++) {
+      const ym = cy(y - 1) * W, y0 = y * W, yp = cy(y + 1) * W;
+      for (let x = 0; x < W; x++) {
+        const xm = cx(x - 1), xp = cx(x + 1);
+        const tl = hm[ym + xm], t = hm[ym + x], tr = hm[ym + xp];
+        const l  = hm[y0 + xm],                  r  = hm[y0 + xp];
+        const bl = hm[yp + xm], b = hm[yp + x], br = hm[yp + xp];
+        // Sobel
+        const gx = (tr + 2 * r + br) - (tl + 2 * l + bl);
+        const gy = (bl + 2 * b + br) - (tl + 2 * t + tr);
+        let nx = -gx * strength * sign;
+        let ny = gy * strength * sign * ySign; // OpenGL (Y+) by default
+        let nz = 1;
+        const inv = 1 / Math.hypot(nx, ny, nz);
+        const p = (y0 + x) * 4;
+        o[p]     = (nx * inv * 0.5 + 0.5) * 255;
+        o[p + 1] = (ny * inv * 0.5 + 0.5) * 255;
+        o[p + 2] = (nz * inv * 0.5 + 0.5) * 255;
+        o[p + 3] = 255;
+      }
+    }
+    nrmCtx.putImageData(out, 0, 0);
+    $('timeOut').textContent = `${Math.round(performance.now() - t0)} ms`;
+    scheduleExport();
+  }
+
+  function scheduleGenerate() {
+    cancelAnimationFrame(pending);
+    pending = requestAnimationFrame(generate);
+  }
+
+  // ---------- Export / compression ----------
+  function buildOutputCanvas() {
+    const source = $('target').value === 'normal' ? nrmCanvas : srcCanvas;
+    const max = +$('maxSize').value;
+    const scale = max ? Math.min(1, max / Math.max(W, H)) : 1;
+    if (scale === 1) return source;
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(W * scale));
+    c.height = Math.max(1, Math.round(H * scale));
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(source, 0, 0, c.width, c.height);
+    return c;
+  }
+
+  function encode() {
+    return new Promise(resolve => {
+      const type = $('format').value;
+      const q = +$('quality').value / 100;
+      let canvas = buildOutputCanvas();
+      if (type === 'image/jpeg') { // JPEG has no alpha: flatten onto black
+        const c = document.createElement('canvas');
+        c.width = canvas.width; c.height = canvas.height;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(canvas, 0, 0);
+        canvas = c;
+      }
+      canvas.toBlob(b => resolve(b), type, type === 'image/png' ? undefined : q);
+    });
+  }
+
+  function scheduleExport() {
+    clearTimeout(exportTimer);
+    exportTimer = setTimeout(async () => {
+      if (!heightMap) return;
+      lastBlob = await encode();
+      if (!lastBlob) return;
+      // Some browsers silently fall back to PNG when WebP is unsupported
+      if (lastBlob.type !== $('format').value) {
+        $('formatHint').textContent = 'Your browser does not support this format; exported as ' + lastBlob.type.split('/')[1].toUpperCase() + '.';
+      } else updateHint();
+      $('sizeOut').textContent = fmtBytes(lastBlob.size);
+      if ($('target').value === 'original' && srcFile) {
+        const diff = (lastBlob.size - srcFile.size) / srcFile.size * 100;
+        const el = $('sizeDiff');
+        el.textContent = (diff > 0 ? '+' : '') + diff.toFixed(0) + '%';
+        el.className = diff <= 0 ? 'saving' : 'worse';
+      } else {
+        $('sizeDiff').textContent = '—';
+        $('sizeDiff').className = '';
+      }
+    }, 150);
+  }
+
+  $('download').addEventListener('click', async () => {
+    const blob = lastBlob || await encode();
+    if (!blob) return;
+    const ext = { 'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg' }[blob.type] || 'png';
+    const suffix = $('target').value === 'normal' ? '_normal' : '_optimized';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${baseName}${suffix}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+
+  // ---------- UI wiring ----------
+  function updateHint() {
+    const fmt = $('format').value, target = $('target').value;
+    $('qualityField').style.display = fmt === 'image/png' ? 'none' : '';
+    $('formatHint').textContent =
+      target === 'normal' && fmt === 'image/jpeg'
+        ? 'Tip: JPEG artifacts distort normals. Prefer PNG or WebP ≥ 90 for normal maps.'
+        : fmt === 'image/png' ? 'PNG is lossless. Reduce max size to shrink the file.' : '';
+  }
+
+  $('strength').addEventListener('input', e => { $('strengthOut').textContent = (+e.target.value).toFixed(1); scheduleGenerate(); });
+  $('blur').addEventListener('input', e => { $('blurOut').textContent = e.target.value; scheduleGenerate(); });
+  ['invertH', 'directx', 'tile'].forEach(id => $(id).addEventListener('change', scheduleGenerate));
+  $('quality').addEventListener('input', e => { $('qualityOut').textContent = e.target.value; scheduleExport(); });
+  ['format', 'target', 'maxSize'].forEach(id => $(id).addEventListener('change', () => { updateHint(); scheduleExport(); }));
+
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+
+  updateHint();
+})();
+</script>
+</body>
+</html>

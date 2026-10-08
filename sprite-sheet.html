@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Sprite Sheet Packer – Online, Exports PNG + JSON (Phaser, Pixi)</title>
+<meta name="description" content="Pack animation frames into a sprite sheet in your browser. Exports PNG plus JSON atlas compatible with Phaser, PixiJS and other engines. No upload, 100% client-side.">
+<meta name="keywords" content="sprite sheet packer, sprite sheet generator, texture atlas, phaser spritesheet, pixijs atlas, gamedev tools">
+<meta property="og:title" content="Free Sprite Sheet Packer">
+<meta property="og:description" content="Turn frames into a sprite sheet + JSON atlas in your browser.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e0f13">
+<style>
+  :root {
+    --bg: #0e0f13; --panel: #171920; --panel-2: #1f222b; --border: #2a2e3a;
+    --text: #e6e8ee; --muted: #8a90a2; --accent: #8b7cff; --accent-2: #5ad1c6; --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+  .nav { max-width: 1200px; margin: 0 auto; padding: 14px 16px 0; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .nav .brand { font-weight: 700; color: var(--text); margin-right: 10px; text-decoration: none; }
+  .nav .brand span { color: var(--accent); }
+  .nav a.link { color: var(--muted); text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 8px; }
+  .nav a.link:hover { color: var(--text); background: var(--panel); }
+  .nav a.link.active { color: var(--text); background: var(--panel-2); }
+  header { max-width: 1200px; margin: 0 auto; padding: 20px 16px 8px; }
+  header h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); letter-spacing: -0.02em; }
+  header h1 span { color: var(--accent); }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .panel + .panel { margin-top: 16px; }
+  #drop { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px 12px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; color: var(--muted); }
+  #drop:hover, #drop.over { border-color: var(--accent); background: rgba(139,124,255,.06); color: var(--text); }
+  #drop strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+  #file { display: none; }
+  .field { margin-bottom: 14px; }
+  .field label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .field label output { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select, input[type=number], input[type=text] { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; cursor: pointer; }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+  button { width: 100%; padding: 11px 14px; border: 0; border-radius: 10px; font: 600 14px/1 inherit; cursor: pointer; transition: filter .15s, opacity .15s; }
+  button.primary { background: var(--accent); color: #fff; }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button:hover:not(:disabled) { filter: brightness(1.12); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-row { display: grid; gap: 8px; }
+  .meta { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .meta b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .canvas-box { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+  .canvas-box + .canvas-box { margin-top: 16px; }
+  .canvas-box .label { padding: 10px 14px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .canvas-wrap { min-height: 220px; display: grid; place-items: center; padding: 12px; overflow: auto;
+    background-color: #12141a;
+    background-image: linear-gradient(45deg, #181b22 25%, transparent 25%), linear-gradient(-45deg, #181b22 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181b22 75%), linear-gradient(-45deg, transparent 75%, #181b22 75%);
+    background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0; }
+  canvas { max-width: 100%; display: block; image-rendering: pixelated; }
+  #sheet { max-height: 60vh; }
+  .placeholder { color: var(--muted); font-size: 13px; }
+  .fps { display: flex; align-items: center; gap: 8px; min-width: 160px; }
+  .fps input { flex: 1; }
+  section.info { max-width: 1200px; margin: 8px auto 0; padding: 0 16px 40px; color: var(--muted); font-size: 14px; }
+  section.info h2 { color: var(--text); font-size: 18px; margin: 28px 0 8px; }
+  section.info h3 { color: var(--text); font-size: 15px; margin: 18px 0 4px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 16px 28px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="index.html">Texel<span>Tools</span></a>
+  <a class="link" href="index.html">Normal Map</a>
+  <a class="link active" href="sprite-sheet.html">Sprite Sheet</a>
+  <a class="link" href="converter.html">Image Converter</a>
+</nav>
+
+<header>
+  <h1>Sprite Sheet <span>Packer</span></h1>
+  <p>Combine animation frames into one sheet with a JSON atlas. Runs entirely in your browser.</p>
+</header>
+
+<main>
+  <aside>
+    <div class="panel">
+      <h2>1 · Frames</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="Choose or drop frame images">
+        <strong>Drop your frames here</strong>
+        or click to browse · select many at once
+      </div>
+      <input type="file" id="file" accept="image/*" multiple>
+      <p class="meta"><b id="count">0</b> frames loaded</p>
+    </div>
+
+    <div class="panel">
+      <h2>2 · Layout</h2>
+      <div class="field">
+        <label for="cols">Columns <output id="colsOut">auto</output></label>
+        <input type="range" id="cols" min="0" max="32" step="1" value="0">
+      </div>
+      <div class="field">
+        <label for="pad">Padding <output id="padOut">0 px</output></label>
+        <input type="range" id="pad" min="0" max="16" step="1" value="0">
+      </div>
+      <label class="check"><input type="checkbox" id="sortName" checked> Sort by file name (frame_2 before frame_10)</label>
+      <label class="check"><input type="checkbox" id="pot"> Power-of-two sheet size</label>
+    </div>
+
+    <div class="panel">
+      <h2>3 · Export</h2>
+      <div class="field">
+        <label for="name">File name</label>
+        <input type="text" id="name" value="spritesheet" spellcheck="false">
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="dlPng" disabled>Download PNG</button>
+        <button class="secondary" id="dlJson" disabled>Download JSON atlas</button>
+        <button class="secondary" id="clear" disabled>Clear frames</button>
+      </div>
+      <p class="meta">Sheet: <b id="sheetSize">—</b> · Cell: <b id="cellSize">—</b></p>
+    </div>
+  </aside>
+
+  <div>
+    <div class="canvas-box">
+      <div class="label"><span>Sprite sheet</span></div>
+      <div class="canvas-wrap">
+        <canvas id="sheet" hidden></canvas>
+        <div class="placeholder" id="ph1">No frames loaded</div>
+      </div>
+    </div>
+    <div class="canvas-box">
+      <div class="label">
+        <span>Animation preview</span>
+        <span class="fps"><input type="range" id="fps" min="1" max="60" value="12"> <output id="fpsOut">12 fps</output></span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="anim" hidden></canvas>
+        <div class="placeholder" id="ph2">Preview appears here</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<section class="info">
+  <h2>How does the sprite sheet packer work?</h2>
+  <p>Drop the individual frames of an animation (for example run_0.png to run_11.png). The packer places each frame in a cell of a uniform grid, sized to the largest frame, so every frame shares the same dimensions. That is the layout most 2D engines expect for frame-based animation.</p>
+  <h3>Which engines can read the JSON?</h3>
+  <p>The atlas uses the widely supported "JSON Hash" format. Phaser loads it with <code>this.load.atlas()</code> and PixiJS with <code>Assets.load()</code>. Because cells are uniform, you can also load the PNG alone as a fixed-size spritesheet using the cell size shown above.</p>
+  <h3>Why use padding?</h3>
+  <p>When sprites are scaled or filtered, neighboring frames can bleed into each other at the edges. One or two pixels of padding prevents that.</p>
+  <h3>Are my images uploaded?</h3>
+  <p>No. All packing happens locally with the HTML5 Canvas API.</p>
+</section>
+
+<footer>Free browser tools for game developers · <a href="privacy.html">Privacy Policy</a></footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const sheet = $('sheet'), sctx = sheet.getContext('2d');
+  const anim = $('anim'), actx = anim.getContext('2d');
+  let frames = []; // { name, img, w, h }
+  let layout = null;
+  let animIdx = 0, animTimer = 0;
+
+  // ---------- Input ----------
+  const drop = $('drop'), fileInput = $('file');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', e => { addFiles(e.target.files); fileInput.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+  function loadImage(file) {
+    return new Promise(resolve => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve({ name: file.name, img, w: img.naturalWidth, h: img.naturalHeight }); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+
+  async function addFiles(list) {
+    const files = [...list].filter(f => f.type.startsWith('image/'));
+    if (!files.length) return;
+    const loaded = (await Promise.all(files.map(loadImage))).filter(Boolean);
+    frames = frames.concat(loaded);
+    render();
+  }
+
+  // ---------- Layout ----------
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+  const nextPot = n => { let p = 1; while (p < n) p *= 2; return p; };
+
+  function computeLayout() {
+    const list = $('sortName').checked ? [...frames].sort((a, b) => collator.compare(a.name, b.name)) : frames;
+    const n = list.length;
+    const pad = +$('pad').value;
+    const cellW = Math.max(...list.map(f => f.w));
+    const cellH = Math.max(...list.map(f => f.h));
+    let cols = +$('cols').value || Math.ceil(Math.sqrt(n));
+    cols = Math.min(cols, n);
+    const rows = Math.ceil(n / cols);
+    let w = cols * cellW + (cols + 1) * pad;
+    let h = rows * cellH + (rows + 1) * pad;
+    if ($('pot').checked) { w = nextPot(w); h = nextPot(h); }
+    const rects = list.map((f, i) => {
+      const c = i % cols, r = Math.floor(i / cols);
+      // center smaller frames inside their cell
+      const x = pad + c * (cellW + pad) + Math.floor((cellW - f.w) / 2);
+      const y = pad + r * (cellH + pad) + Math.floor((cellH - f.h) / 2);
+      return { f, x, y, cx: pad + c * (cellW + pad), cy: pad + r * (cellH + pad) };
+    });
+    return { list, rects, w, h, cellW, cellH, cols, rows, pad };
+  }
+
+  function render() {
+    const has = frames.length > 0;
+    $('count').textContent = frames.length;
+    ['dlPng', 'dlJson', 'clear'].forEach(id => $(id).disabled = !has);
+    sheet.hidden = anim.hidden = !has;
+    $('ph1').hidden = $('ph2').hidden = has;
+    if (!has) { layout = null; $('sheetSize').textContent = $('cellSize').textContent = '—'; stopAnim(); return; }
+
+    layout = computeLayout();
+    const MAX = 16384;
+    if (layout.w > MAX || layout.h > MAX) {
+      alert(`Sheet would be ${layout.w}×${layout.h}px, which is larger than browsers allow. Use more columns or fewer frames.`);
+    }
+    sheet.width = layout.w; sheet.height = layout.h;
+    sctx.clearRect(0, 0, layout.w, layout.h);
+    sctx.imageSmoothingEnabled = false;
+    layout.rects.forEach(r => sctx.drawImage(r.f.img, r.x, r.y));
+
+    $('sheetSize').textContent = `${layout.w}×${layout.h}`;
+    $('cellSize').textContent = `${layout.cellW}×${layout.cellH}`;
+
+    anim.width = layout.cellW; anim.height = layout.cellH;
+    // scale the preview up for small pixel-art frames
+    const scale = Math.max(1, Math.floor(200 / Math.max(layout.cellW, layout.cellH)));
+    anim.style.width = layout.cellW * scale + 'px';
+    anim.style.height = layout.cellH * scale + 'px';
+    animIdx = 0;
+    startAnim();
+  }
+
+  // ---------- Animation preview ----------
+  function drawFrame() {
+    if (!layout) return;
+    const r = layout.rects[animIdx % layout.rects.length];
+    actx.clearRect(0, 0, anim.width, anim.height);
+    actx.imageSmoothingEnabled = false;
+    actx.drawImage(r.f.img, r.x - r.cx, r.y - r.cy);
+    animIdx++;
+  }
+  function startAnim() {
+    stopAnim();
+    drawFrame();
+    animTimer = setInterval(drawFrame, 1000 / +$('fps').value);
+  }
+  function stopAnim() { clearInterval(animTimer); }
+
+  // ---------- Export ----------
+  function fileBase() { return ($('name').value.trim() || 'spritesheet').replace(/[^\w.-]+/g, '_'); }
+
+  function download(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  $('dlPng').addEventListener('click', () => {
+    sheet.toBlob(b => b && download(b, fileBase() + '.png'), 'image/png');
+  });
+
+  $('dlJson').addEventListener('click', () => {
+    if (!layout) return;
+    const base = fileBase();
+    const out = { frames: {}, meta: {
+      app: 'TexelTools Sprite Sheet Packer', version: '1.0', image: base + '.png',
+      format: 'RGBA8888', size: { w: layout.w, h: layout.h }, scale: '1',
+      cell: { w: layout.cellW, h: layout.cellH, columns: layout.cols, rows: layout.rows, padding: layout.pad }
+    } };
+    const used = new Set();
+    layout.rects.forEach(r => {
+      let key = r.f.name;
+      for (let i = 2; used.has(key); i++) key = r.f.name.replace(/(\.[^.]+)?$/, `_${i}$1`);
+      used.add(key);
+      // Each frame is the full cell, so every frame shares the same size and pivot
+      out.frames[key] = {
+        frame: { x: r.cx, y: r.cy, w: layout.cellW, h: layout.cellH },
+        rotated: false, trimmed: false,
+        spriteSourceSize: { x: 0, y: 0, w: layout.cellW, h: layout.cellH },
+        sourceSize: { w: layout.cellW, h: layout.cellH }
+      };
+    });
+    download(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }), base + '.json');
+  });
+
+  $('clear').addEventListener('click', () => { frames = []; render(); });
+
+  // ---------- Controls ----------
+  $('cols').addEventListener('input', e => { $('colsOut').textContent = +e.target.value || 'auto'; render(); });
+  $('pad').addEventListener('input', e => { $('padOut').textContent = e.target.value + ' px'; render(); });
+  ['sortName', 'pot'].forEach(id => $(id).addEventListener('change', render));
+  $('fps').addEventListener('input', e => { $('fpsOut').textContent = e.target.value + ' fps'; if (layout) startAnim(); });
+})();
+</script>
+</body>
+</html>
